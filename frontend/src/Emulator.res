@@ -182,11 +182,43 @@ let useEmulatorDisplay = (~iodine, ~bios, ~rom, ~intervalRate) => {
   })
 
   React.useEffect2(() => {
+    Js.log("setIntervalRate")
     iodine->Iodine.setIntervalRate(intervalRate)
     None
   }, (iodine, intervalRate))
 
   canvasRef
+}
+
+let useEmulatorAudio = (~iodine) => {
+  module GlueCodeMixer = {
+    type t
+    @module("./util/Audio") @new external make: Dom.element => t = "GlueCodeMixer"
+  }
+
+  module GlueCodeMixerInput = {
+    type t
+    @module("./util/Audio") @new external make: GlueCodeMixer.t => t = "GlueCodeMixerInput"
+  }
+
+  let hasInitialized = React.useRef(false)
+  let playButtonRef = React.useRef(Js.Nullable.null)
+  React.useEffect1(() =>
+    playButtonRef.current
+    ->Js.Nullable.toOption
+    ->Belt.Option.flatMap(el => {
+      if !hasInitialized.current {
+        let mixer = GlueCodeMixer.make(el)
+        let mixerInput = GlueCodeMixerInput.make(mixer)
+        iodine->Iodine.attachAudioHandler(mixerInput)
+        iodine->Iodine.enableAudio
+        hasInitialized.current = true
+      }->ignore
+      None
+    })
+  , [iodine])
+
+  playButtonRef
 }
 
 @react.component
@@ -197,13 +229,18 @@ let make = (
 ) => {
   let iodine = LazyRef.use(Iodine.make)
   let canvasRef = useEmulatorDisplay(~iodine, ~bios, ~rom, ~intervalRate)
+  let playButtonRef = useEmulatorAudio(~iodine)
   let {width} = EmulatorProvider.useEmulatorContext()
 
   let scaleFactor = width /. gbaWidth->float_of_int
   let height = width *. gbaAspectRatio
 
   <>
-    <p> <button onClick={_ => iodine->Iodine.play}> {"Play"->React.string} </button> </p>
+    <p>
+      <button onClick={_ => iodine->Iodine.play} ref={ReactDOM.Ref.domRef(playButtonRef)}>
+        {"Play"->React.string}
+      </button>
+    </p>
     <div style={ReactDOMStyle.make(~height=height->Js.Float.toString ++ "px", ())}>
       <canvas
         ref={ReactDOM.Ref.domRef(canvasRef)}

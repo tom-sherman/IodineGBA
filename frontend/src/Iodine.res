@@ -13,4 +13,8 @@ external attachGraphicsFrameHandler: (
 @send external play: t => unit = "play"
 @send external stop: t => unit = "stop"
 @send external attachPlayStatusHandler: (t, int => unit) => unit = "attachPlayStatusHandler"
+// TODO: Type this
+@send external attachAudioHandler: (t, 'a) => unit = "attachAudioHandler"
 @send external timerCallback: (t, int) => unit = "timerCallback"
+@send external reinitializeAudio: t => unit = "reinitializeAudio"
+@send external enableAudio: t => unit = "enableAudio"
