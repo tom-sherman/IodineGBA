@@ -1,0 +1,22 @@
+{
+  "name": "gba-touch",
+  "version": "0.0.1",
+  "sources": {
+    "dir": "frontend/src",
+    "subdirs": true
+  },
+  "package-specs": {
+    "module": "es6",
+    "in-source": true
+  },
+  "suffix": ".bs.js",
+  "reason": { "react-jsx": 3 },
+  "bs-dependencies": [
+    "@rescript/react",
+    "rescript-webapi",
+    "@ryyppy/rescript-promise"
+  ],
+  "warnings": {
+    "error": "+101"
+  }
+}
