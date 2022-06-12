@@ -13,7 +13,7 @@ import GameBoyAdvanceDMA0 from './memory/DMA0';
 import GameBoyAdvanceDMA1 from './memory/DMA1';
 import GameBoyAdvanceDMA2 from './memory/DMA2';
 import GameBoyAdvanceDMA3 from './memory/DMA3';
-import GameBoyAdvanceCartridge from './cartridge';
+import GameBoyAdvanceCartridge from './Cartridge';
 import GameBoyAdvanceCPU from './CPU';
 import GameBoyAdvanceDMA from './DMA';
 import GameBoyAdvanceGraphics from './Graphics';
