@@ -1,13 +1,15 @@
 "use strict";
 /*
  Copyright (C) 2012-2014 Grant Galitz
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import { getUint8Array } from '../../includes/TypedArrayShim';
+
 function THUMBInstructionSet(CPUCore) {
     this.CPUCore = CPUCore;
     this.initialize();
@@ -35,7 +37,7 @@ THUMBInstructionSet.prototype.executeDecoded = function () {
      Instruction Decode Pattern:
       X = Possible opcode bit; N = Data Bit, definitely not an opcode bit
      OPCODE: XXXXXXXXXXNNNNNN
-     
+
      Since many of those "X"s are redundant and possibly data, we can "process"
      it and use a table to further decide what unique opcode it is, leaving us with
      a dense switch statement. Not "processing" the opcode beforehand would leave us
@@ -1491,3 +1493,5 @@ function compileTHUMBInstructionDecodeMap() {
     THUMBInstructionSet.prototype.instructionMap = instructionMap;
 }
 compileTHUMBInstructionDecodeMap();
+
+export default THUMBInstructionSet;

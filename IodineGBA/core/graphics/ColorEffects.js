@@ -345,3 +345,5 @@ GameBoyAdvanceColorEffectsRenderer.prototype.writeBLDCNT16 = function (data) {
     //Select target 2:
     this.effectsTarget2 = (data & 0x3F00) << 8;
 }
+
+export default GameBoyAdvanceColorEffectsRenderer;

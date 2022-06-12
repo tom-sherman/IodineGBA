@@ -8,7 +8,7 @@
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-function getInt8Array(size_t) {
+export function getInt8Array(size_t) {
     try {
         return new Int8Array(size_t);
     }
@@ -16,7 +16,7 @@ function getInt8Array(size_t) {
         return getArray(size_t);
     }
 }
-function getUint8Array(size_t) {
+export function getUint8Array(size_t) {
     try {
         return new Uint8Array(size_t);
     }
@@ -24,7 +24,7 @@ function getUint8Array(size_t) {
         return getArray(size_t);
     }
 }
-function getUint8View(typed_array) {
+export function getUint8View(typed_array) {
     try {
         return new Uint8Array(typed_array.buffer);
     }
@@ -32,7 +32,7 @@ function getUint8View(typed_array) {
         return null;
     }
 }
-function getSharedUint8Array(size_t) {
+export function getSharedUint8Array(size_t) {
     try {
         //Compatibility for older Firefox Nightlies:
         return new SharedUint8Array(size_t);
@@ -41,7 +41,7 @@ function getSharedUint8Array(size_t) {
         return new Uint8Array(new SharedArrayBuffer(size_t));
     }
 }
-function getInt16Array(size_t) {
+export function getInt16Array(size_t) {
     try {
         return new Int16Array(size_t);
     }
@@ -49,7 +49,7 @@ function getInt16Array(size_t) {
         return getArray(size_t);
     }
 }
-function getUint16Array(size_t) {
+export function getUint16Array(size_t) {
     try {
         return new Uint16Array(size_t);
     }
@@ -57,7 +57,7 @@ function getUint16Array(size_t) {
         return getArray(size_t);
     }
 }
-function getUint16View(typed_array) {
+export function getUint16View(typed_array) {
     try {
         return new Uint16Array(typed_array.buffer);
     }
@@ -65,7 +65,7 @@ function getUint16View(typed_array) {
         return null;
     }
 }
-function getInt32Array(size_t) {
+export function getInt32Array(size_t) {
     try {
         return new Int32Array(size_t);
     }
@@ -73,7 +73,7 @@ function getInt32Array(size_t) {
         return getArray(size_t);
     }
 }
-function getInt32View(typed_array) {
+export function getInt32View(typed_array) {
     try {
         return new Int32Array(typed_array.buffer);
     }
@@ -81,7 +81,7 @@ function getInt32View(typed_array) {
         return null;
     }
 }
-function getInt32ViewCustom(typed_array, start, end) {
+export function getInt32ViewCustom(typed_array, start, end) {
     try {
         typed_array = getInt32View(typed_array);
         return typed_array.subarray(start, end);
@@ -96,7 +96,7 @@ function getInt32ViewCustom(typed_array, start, end) {
         }
     }
 }
-function getSharedInt32Array(size_t) {
+export function getSharedInt32Array(size_t) {
     try {
         //Compatibility for older Firefox Nightlies:
         return new SharedInt32Array(size_t);
@@ -105,7 +105,7 @@ function getSharedInt32Array(size_t) {
         return new Int32Array(new SharedArrayBuffer(size_t << 2));
     }
 }
-function getUint8ViewCustom(typed_array, start, end) {
+export function getUint8ViewCustom(typed_array, start, end) {
     try {
         typed_array = getUint8View(typed_array);
         return typed_array.subarray(start, end);
@@ -120,7 +120,7 @@ function getUint8ViewCustom(typed_array, start, end) {
         }
     }
 }
-function getUint32Array(size_t) {
+export function getUint32Array(size_t) {
     try {
         return new Uint32Array(size_t);
     }
@@ -128,7 +128,7 @@ function getUint32Array(size_t) {
         return getArray(size_t);
     }
 }
-function getSharedUint32Array(size_t) {
+export function getSharedUint32Array(size_t) {
     try {
         //Compatibility for older Firefox Nightlies:
         return new SharedUint32Array(size_t);
@@ -137,7 +137,7 @@ function getSharedUint32Array(size_t) {
         return new Uint32Array(new SharedArrayBuffer(size_t << 2));
     }
 }
-function getFloat32Array(size_t) {
+export function getFloat32Array(size_t) {
     try {
         return new Float32Array(size_t);
     }
@@ -145,7 +145,7 @@ function getFloat32Array(size_t) {
         return getArray(size_t);
     }
 }
-function getSharedFloat32Array(size_t) {
+export function getSharedFloat32Array(size_t) {
     try {
         //Compatibility for older Firefox Nightlies:
         return new SharedFloat32Array(size_t);
@@ -154,15 +154,15 @@ function getSharedFloat32Array(size_t) {
         return new Float32Array(new SharedArrayBuffer(size_t << 2));
     }
 }
-function getArray(size_t) {
+export function getArray(size_t) {
     var genericArray = [];
     for (var size_index = 0; size_index < size_t; ++size_index) {
         genericArray[size_index] = 0;
     }
     return genericArray;
 }
-var __VIEWS_SUPPORTED__ = getUint16View(getInt32Array(1)) !== null;
-var __LITTLE_ENDIAN__ = (function () {
+export let __VIEWS_SUPPORTED__ = getUint16View(getInt32Array(1)) !== null;
+export let __LITTLE_ENDIAN__ = (function () {
     if (__VIEWS_SUPPORTED__) {
         var test = getInt32Array(1);
         test[0] = 1;

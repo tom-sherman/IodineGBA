@@ -8,6 +8,8 @@
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+import { __LITTLE_ENDIAN__ } from '../../includes/TypedArrayShim';
+
 function GameBoyAdvanceBG2FrameBufferRenderer(gfx) {
     this.gfx = gfx;
 }
@@ -160,3 +162,5 @@ GameBoyAdvanceBG2FrameBufferRenderer.prototype.writeFrameSelect = function (fram
     frameSelect = frameSelect >> 31;
     this.frameSelect = frameSelect & 0xA000;
 }
+
+export default GameBoyAdvanceBG2FrameBufferRenderer;

@@ -54,3 +54,5 @@ GameBoyAdvanceGPIOChip.prototype.write = function (address, data) {
             this.readWrite = data & 0x1;
     }
 }
+
+export default GameBoyAdvanceGPIOChip;

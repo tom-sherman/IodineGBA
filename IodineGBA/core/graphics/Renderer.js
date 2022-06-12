@@ -8,14 +8,26 @@
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-function GameBoyAdvanceGraphicsRenderer(coreExposed, skippingBIOS) {
+import { __VIEWS_SUPPORTED__, __LITTLE_ENDIAN__, getUint8Array, getUint16View, getInt32View, getInt32Array, getInt32ViewCustom } from '../../includes/TypedArrayShim';
+import GameBoyAdvanceAffineBGRenderer from './AffineBG';
+import GameBoyAdvanceBG2FrameBufferRenderer from './BG2FrameBuffer';
+import GameBoyAdvanceBGMatrixRenderer from './BGMatrix';
+import GameBoyAdvanceBGTEXTRenderer from './BGTEXT';
+import GameBoyAdvanceColorEffectsRenderer from './ColorEffects';
+import { GameBoyAdvanceCompositor, GameBoyAdvanceOBJWindowCompositor, GameBoyAdvanceWindowCompositor } from './Compositor'
+import GameBoyAdvanceMosaicRenderer from './Mosaic'
+import GameBoyAdvanceOBJRenderer from './OBJ';
+import GameBoyAdvanceOBJWindowRenderer from './OBJWindow';
+import GameBoyAdvanceWindowRenderer from './Window';
+
+export function GameBoyAdvanceGraphicsRenderer(coreExposed, skippingBIOS) {
     this.coreExposed = coreExposed;
     this.initializeIO(!!skippingBIOS);
     this.initializePaletteStorage();
     this.generateRenderers();
     this.initializeRenderers();
 }
-function GameBoyAdvanceGraphicsRendererOffthread(skippingBIOS) {
+export function GameBoyAdvanceGraphicsRendererOffthread(skippingBIOS) {
     this.initializeIO(!!skippingBIOS);
     this.initializePaletteStorage();
     this.generateRenderers();
