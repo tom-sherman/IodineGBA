@@ -1,20 +1,3 @@
-module EmulatorProvider = {
-  let context = React.createContext(ElementDimensions.defaultDimensions)
-
-  let provider = React.Context.provider(context)
-
-  @react.component
-  let make = (~children) => {
-    let (dimensions, ref) = ElementDimensions.useDimensions()
-
-    <div ref={ReactDOM.Ref.domRef(ref)}>
-      {React.createElement(provider, {"value": dimensions, "children": children})}
-    </div>
-  }
-
-  let useEmulatorContext = () => React.useContext(context)
-}
-
 let gbaWidth = 240
 let gbaHeight = 160
 let gbaAspectRatio = gbaHeight->float_of_int /. gbaWidth->float_of_int
@@ -22,16 +5,26 @@ let gbaAspectRatio = gbaHeight->float_of_int /. gbaWidth->float_of_int
 @new external makeUint8Array: int => Js.TypedArray2.Uint8Array.t = "Uint8Array"
 external castUintArraytoArray: Js.TypedArray2.Uint8Array.t => Js.Array.t<int> = "%identity"
 
-let useEmulatorDisplay = (~iodine, ~bios, ~rom, ~intervalRate) => {
-  let canvasRef = React.useRef(Js.Nullable.null)
-  let (isPlaying, setIsPlaying) = React.useState(() => false)
+let useEmulatorRom = (~iodine, ~bios, ~rom) => {
+  React.useEffect1(() => {
+    iodine->Iodine.attachBIOS(bios)
+    None
+  }, [bios])
+
+  React.useEffect1(() => {
+    iodine->Iodine.attachROM(rom)
+    None
+  }, [rom])
+}
+
+let useEmulatorClock = (~iodine, ~intervalRate, ~isPlaying) => {
   let (startTime, setStartTime) = React.useState(() => 0.)
 
-  React.useEffect2(() => {
+  React.useEffect0(() => {
     setStartTime(_ => Js.Date.now())
 
     None
-  }, (bios, rom))
+  })
 
   React.useEffect2(() => {
     let interval = ref(None)
@@ -42,9 +35,7 @@ let useEmulatorDisplay = (~iodine, ~bios, ~rom, ~intervalRate) => {
           Some(
             Js.Global.setInterval(
               _ =>
-                iodine->Iodine.timerCallback(
-                  lsr(Js.Date.now()->int_of_float - startTime->int_of_float, 0),
-                ),
+                iodine->Iodine.timerCallback(Js.Date.now()->int_of_float - startTime->int_of_float),
               intervalRate,
             ),
           )
@@ -61,27 +52,15 @@ let useEmulatorDisplay = (~iodine, ~bios, ~rom, ~intervalRate) => {
     )
   }, (isPlaying, intervalRate))
 
-  React.useEffect0(() => {
-    iodine->Iodine.attachPlayStatusHandler(status =>
-      switch status {
-      | 0 => setIsPlaying(_ => false)
-      | 1 => setIsPlaying(_ => true)
-      | _ => Js.Exn.raiseError("Unexpected play status" ++ status->string_of_int)
-      }
-    )
-
+  React.useEffect2(() => {
+    Js.log("setIntervalRate")
+    iodine->Iodine.setIntervalRate(intervalRate)
     None
-  })
+  }, (iodine, intervalRate))
+}
 
-  React.useEffect1(() => {
-    iodine->Iodine.attachBIOS(bios)
-    None
-  }, [bios])
-
-  React.useEffect1(() => {
-    iodine->Iodine.attachROM(rom)
-    None
-  }, [rom])
+let useEmulatorDisplay = (~iodine) => {
+  let canvasRef = React.useRef(Js.Nullable.null)
 
   React.useEffect0(() => {
     let rgbCount = gbaWidth * gbaHeight * 3
@@ -149,20 +128,15 @@ let useEmulatorDisplay = (~iodine, ~bios, ~rom, ~intervalRate) => {
 
     iodine->Iodine.attachGraphicsFrameHandler({
       "copyBuffer": buf => {
-        let swizzle = () => {
-          let swizzledFrame = swizzledFrameFree->Js.Array2.shift->Belt.Option.getExn
-          swizzledFrame->Js.TypedArray2.Uint8Array.setArray(buf->castUintArraytoArray)
-          swizzledFrameReady->Js.Array2.push(swizzledFrame)->ignore
-        }
-
         if swizzledFrameFree->Js.Array2.length == 0 {
           swizzledFrameFree
           ->Js.Array2.push(swizzledFrameReady->Js.Array2.shift->Belt.Option.getExn)
           ->ignore
-          swizzle()
-        } else {
-          swizzle()
-        }
+        }->ignore
+
+        let swizzledFrame = swizzledFrameFree->Js.Array2.shift->Belt.Option.getExn
+        swizzledFrame->Js.TypedArray2.Uint8Array.setArray(buf->castUintArraytoArray)
+        swizzledFrameReady->Js.Array2.push(swizzledFrame)->ignore
       },
     })
 
@@ -180,12 +154,6 @@ let useEmulatorDisplay = (~iodine, ~bios, ~rom, ~intervalRate) => {
 
     Some(() => running.contents = false)
   })
-
-  React.useEffect2(() => {
-    Js.log("setIntervalRate")
-    iodine->Iodine.setIntervalRate(intervalRate)
-    None
-  }, (iodine, intervalRate))
 
   canvasRef
 }
@@ -221,6 +189,23 @@ let useEmulatorAudio = (~iodine) => {
   playButtonRef
 }
 
+module EmulatorProvider = {
+  let context = React.createContext(ElementDimensions.defaultDimensions)
+
+  let provider = React.Context.provider(context)
+
+  @react.component
+  let make = (~children) => {
+    let (dimensions, ref) = ElementDimensions.useDimensions()
+
+    <div ref={ReactDOM.Ref.domRef(ref)}>
+      {React.createElement(provider, {"value": dimensions, "children": children})}
+    </div>
+  }
+
+  let useEmulatorContext = () => React.useContext(context)
+}
+
 @react.component
 let make = (
   ~intervalRate=16,
@@ -228,7 +213,23 @@ let make = (
   ~rom: Js.TypedArray2.Uint8Array.t,
 ) => {
   let iodine = LazyRef.use(Iodine.make)
-  let canvasRef = useEmulatorDisplay(~iodine, ~bios, ~rom, ~intervalRate)
+  let (isPlaying, setIsPlaying) = React.useState(() => false)
+  useEmulatorClock(~iodine, ~intervalRate, ~isPlaying)
+
+  React.useEffect0(() => {
+    iodine->Iodine.attachPlayStatusHandler(status =>
+      switch status {
+      | 0 => setIsPlaying(_ => false)
+      | 1 => setIsPlaying(_ => true)
+      | _ => Js.Exn.raiseError("Unexpected play status" ++ status->string_of_int)
+      }
+    )
+
+    None
+  })
+
+  let canvasRef = useEmulatorDisplay(~iodine)
+  useEmulatorRom(~iodine, ~rom, ~bios)
   let playButtonRef = useEmulatorAudio(~iodine)
   let {width} = EmulatorProvider.useEmulatorContext()
 
