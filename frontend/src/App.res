@@ -23,9 +23,20 @@ let reducer = (state, event) =>
 
 @react.component
 let make = () => {
+  open Braid
+  open Braid.Prop
   let (state, dipatch) = React.useReducer(reducer, UploadingROMs({rom: None, bios: None}))
 
   <>
+    <Box padding={[#all(#large)]->p}>
+      <Card>
+        <Stack space={[#all(#large)]->p}>
+          <Heading level=#3> {"Heading"->React.string} </Heading>
+          <Text> {"lipsum1"->React.string} </Text>
+          <Text> {"lipsum2"->React.string} </Text>
+        </Stack>
+      </Card>
+    </Box>
     <p>
       {"BIOS:"->React.string}
       <input
