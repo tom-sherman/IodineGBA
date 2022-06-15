@@ -74,62 +74,9 @@ module Home = {
 
 @react.component
 let make = () => {
-  open Braid
-  open Braid.Prop
-  let (state, dipatch) = React.useReducer(reducer, UploadingROMs({rom: None, bios: None}))
+  open ReactRouter
 
-  <>
-    <Box padding={[#all(#large)]->p}>
-      <Card>
-        <Stack space={[#all(#large)]->p}>
-          <Heading level=#3> {"Heading"->React.string} </Heading>
-          <Text> {"lipsum1"->React.string} </Text>
-          <Text> {"lipsum2"->React.string} </Text>
-        </Stack>
-      </Card>
-    </Box>
-    <p>
-      {"BIOS:"->React.string}
-      <input
-        type_="file"
-        onChange={e => {
-          let target = e->ReactEvent.Form.target
-          switch target["files"]->Webapi.FileList.toArray->Belt.Array.get(0) {
-          | None => ()
-          | Some(file) =>
-            file
-            ->Webapi__File.arrayBuffer
-            ->Promise.thenResolve(buf =>
-              dipatch(LoadBios(buf->Js.TypedArray2.Uint8Array.fromBuffer))
-            )
-            ->ignore
-          }
-        }}
-      />
-    </p>
-    <p>
-      {"ROM:"->React.string}
-      <input
-        type_="file"
-        onChange={e => {
-          let target = e->ReactEvent.Form.target
-          switch target["files"]->Webapi.FileList.toArray->Belt.Array.get(0) {
-          | None => ()
-          | Some(file) =>
-            file
-            ->Webapi__File.arrayBuffer
-            ->Promise.thenResolve(buf =>
-              dipatch(LoadRom(buf->Js.TypedArray2.Uint8Array.fromBuffer))
-            )
-            ->ignore
-          }
-        }}
-      />
-    </p>
-    {switch state {
-    | Ready({rom, bios}) =>
-      <Emulator.EmulatorProvider> <Emulator bios={bios} rom={rom} /> </Emulator.EmulatorProvider>
-    | _ => React.null
-    }}
-  </>
+  <DataBrowserRouter>
+    <Route path="/" element={<Home />} action={Home.action} loader={Home.loader} />
+  </DataBrowserRouter>
 }
