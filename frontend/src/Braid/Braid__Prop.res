@@ -7,6 +7,10 @@ type propObject<'a> = {
   wide: option<'a>,
 }
 
+type space = propObject<
+  [#xsmall | #small | #large | #medium | #none | #gutter | #xxsmall | #xlarge | #xxlarge],
+>
+
 %%private(
   let rec pAux = (prop: array<responsiveProp<'a>>, obj) =>
     if prop->Js.Array2.length === 0 {
