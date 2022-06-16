@@ -12,9 +12,12 @@ external attachGraphicsFrameHandler: (
 @send external attachROM: (t, Js.TypedArray2.Uint8Array.t) => unit = "attachROM"
 @send external play: t => unit = "play"
 @send external stop: t => unit = "stop"
+@send external pause: t => unit = "pause"
 @send external attachPlayStatusHandler: (t, int => unit) => unit = "attachPlayStatusHandler"
 // TODO: Type this
 @send external attachAudioHandler: (t, 'a) => unit = "attachAudioHandler"
 @send external timerCallback: (t, int) => unit = "timerCallback"
 @send external reinitializeAudio: t => unit = "reinitializeAudio"
 @send external enableAudio: t => unit = "enableAudio"
+@send external keyUp: (t, int) => unit = "keyUp"
+@send external keyDown: (t, int) => unit = "keyDown"

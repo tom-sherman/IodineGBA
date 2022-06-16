@@ -2,8 +2,11 @@ module Storage = {
   let bios = ref(None)
   let rom = ref(None)
 
+  @new
+  external makeUnint8ArrayWithArrayBuffer: Webapi.Fetch.arrayBuffer => Js.TypedArray2.Uint8Array.t =
+    "Uint8Array"
+
   let store = data => {
-    Js.log(data)
     bios := Some(data["bios"])
     rom := Some(data["rom"])
 
@@ -15,17 +18,26 @@ module Storage = {
 
   let get = () => {
     open Webapi.Fetch
-    let fd = FormData.make()
-    bios.contents->Belt.Option.map(bios => fd->FormData.appendFile("bios", bios))->ignore
-    rom.contents->Belt.Option.map(rom => fd->FormData.appendFile("rom", rom))->ignore
 
-    Promise.resolve(makeResponseWithFormData(fd))
+    let decodeRom = res =>
+      res->Response.arrayBuffer->Promise.thenResolve(makeUnint8ArrayWithArrayBuffer)
+
+    Promise.all2((
+      fetch("/gba_bios.bin")->Promise.then(decodeRom),
+      fetch("/earthwormjim2.gba")->Promise.then(decodeRom),
+    ))->Promise.thenResolve(((bios, rom)) =>
+      {
+        "bios": bios,
+        "rom": rom,
+      }
+    )
   }
 }
 
 module Home = {
   let loader = _ => Storage.get()
 
+  // Currently unused, blocked by https://github.com/remix-run/react-router/issues/8982
   let action = ({ReactRouter.Route.request: request}) => {
     open Webapi.Fetch
 
@@ -53,21 +65,46 @@ module Home = {
   @react.component
   let make = () => {
     open ReactRouter
+    open Braid
     let data = useLoaderData()
     let maybeRom = data["rom"]
     let maybeBios = data["bios"]
 
+    let (playState, setPlayState) = React.useState(() => #stopped)
+
+    let data = Emulator.useEmulator(~bios=maybeBios, ~rom=maybeRom, ~intervalRate=16, ~playState)
+
     <>
-      <Form method={#post} encType="multipart/form-data">
-        <p> {"BIOS:"->React.string} <input name="bios" type_="file" /> </p>
-        <p> {"ROM:"->React.string} <input name="rom" type_="file" /> </p>
-        <button type_="submit"> {"Save"->React.string} </button>
-      </Form>
-      {switch (maybeRom, maybeBios) {
-      | (Some(rom), Some(bios)) =>
-        <Emulator.EmulatorProvider> <Emulator bios={bios} rom={rom} /> </Emulator.EmulatorProvider>
-      | _ => React.null
-      }}
+      <Emulator.Wrapper>
+        <Emulator data />
+        <div
+          style={ReactDOMStyle.make(
+            ~position="absolute",
+            ~top="0",
+            ~left="0",
+            ~width="100%",
+            ~height="100%",
+            ~display="flex",
+            ~justifyContent="center",
+            ~alignItems="center",
+            ~backgroundColor={playState == #stopped ? "rgba(0,0,0,0.5)" : "transparent"},
+            (),
+          )}>
+          {switch playState {
+          | #paused
+          | #stopped =>
+            <ButtonIcon
+              id="play"
+              icon={<Icon.Video />}
+              size=#large
+              label="Play"
+              ref={data.playButtonRef}
+              onClick={_ => setPlayState(_ => #playing)}
+            />
+          | #playing => React.null
+          }}
+        </div>
+      </Emulator.Wrapper>
     </>
   }
 }
@@ -77,6 +114,6 @@ let make = () => {
   open ReactRouter
 
   <DataBrowserRouter>
-    <Route path="/" element={<Home />} action={Home.action} loader={Home.loader} />
+    <Route path="/" element={<Home />} loader={Home.loader} />
   </DataBrowserRouter>
 }

@@ -7,12 +7,12 @@ external castUintArraytoArray: Js.TypedArray2.Uint8Array.t => Js.Array.t<int> = 
 
 let useEmulatorRom = (~iodine, ~bios, ~rom) => {
   React.useEffect1(() => {
-    iodine->Iodine.attachBIOS(bios)
+    bios->Belt.Option.map(bios => iodine->Iodine.attachBIOS(bios))->ignore
     None
   }, [bios])
 
   React.useEffect1(() => {
-    iodine->Iodine.attachROM(rom)
+    rom->Belt.Option.map(rom => iodine->Iodine.attachROM(rom))->ignore
     None
   }, [rom])
 }
@@ -58,6 +58,57 @@ let useEmulatorClock = (~iodine, ~intervalRate, ~isPlaying) => {
     None
   }, (iodine, intervalRate))
 }
+
+// [
+//             //Use this to control the GBA key mapping:
+//             //A:
+//             88,
+//             //B:
+//             90,
+//             //Select:
+//             16,
+//             //Start:
+//             13,
+//             //Right:
+//             39,
+//             //Left:
+//             37,
+//             //Up:
+//             38,
+//             //Down:
+//             40,
+//             //R:
+//             83,
+//             //L:
+//             65
+//         ]
+
+type joypadKey = A | B | Select | Start | Right | Left | Up | Down | R | L
+
+let getJoyPadKey = (key: joypadKey) => {
+  switch key {
+  | A => 88
+  | B => 90
+  | Select => 16
+  | Start => 0x013
+  | Right => 39
+  | Left => 37
+  | Up => 38
+  | Down => 40
+  | R => 83
+  | L => 65
+  }
+}
+
+type joypadCallbacks = {
+  keyDown: joypadKey => unit,
+  keyUp: joypadKey => unit,
+}
+
+let useEmulatorJoypad = (~iodine) => React.useMemo1(() => {
+    keyDown: key => iodine->Iodine.keyDown(key->getJoyPadKey),
+    keyUp: key => iodine->Iodine.keyUp(key->getJoyPadKey),
+  }, [iodine])
 
 let useEmulatorDisplay = (~iodine) => {
   let canvasRef = React.useRef(Js.Nullable.null)
@@ -189,7 +240,7 @@ let useEmulatorAudio = (~iodine) => {
   playButtonRef
 }
 
-module EmulatorProvider = {
+module Wrapper = {
   let context = React.createContext(ElementDimensions.defaultDimensions)
 
   let provider = React.Context.provider(context)
@@ -197,8 +248,15 @@ module EmulatorProvider = {
   @react.component
   let make = (~children) => {
     let (dimensions, ref) = ElementDimensions.useDimensions()
+    let height = dimensions.width *. gbaAspectRatio
 
-    <div ref={ReactDOM.Ref.domRef(ref)}>
+    <div
+      ref={ReactDOM.Ref.domRef(ref)}
+      style={ReactDOMStyle.make(
+        ~height=height->Js.Float.toString ++ "px",
+        ~position="relative",
+        (),
+      )}>
       {React.createElement(provider, {"value": dimensions, "children": children})}
     </div>
   }
@@ -206,55 +264,72 @@ module EmulatorProvider = {
   let useEmulatorContext = () => React.useContext(context)
 }
 
-@react.component
-let make = (
+type playState = [#playing | #paused | #stopped]
+
+type emulatorData = {
+  canvasRef: ReactDOM.domRef,
+  playButtonRef: ReactDOM.domRef,
+  playState: playState,
+  keyDown: joypadKey => unit,
+  keyUp: joypadKey => unit,
+}
+
+let useEmulator = (
   ~intervalRate=16,
-  ~bios: Js.TypedArray2.Uint8Array.t,
-  ~rom: Js.TypedArray2.Uint8Array.t,
+  ~bios: option<Js.TypedArray2.Uint8Array.t>,
+  ~rom: option<Js.TypedArray2.Uint8Array.t>,
+  ~playState: playState,
 ) => {
   let iodine = LazyRef.use(Iodine.make)
-  let (isPlaying, setIsPlaying) = React.useState(() => false)
-  useEmulatorClock(~iodine, ~intervalRate, ~isPlaying)
+
+  useEmulatorClock(~iodine, ~intervalRate, ~isPlaying=playState == #playing)
+  useEmulatorRom(~iodine, ~rom, ~bios)
+  let {keyDown, keyUp} = useEmulatorJoypad(~iodine)
 
   React.useEffect0(() => {
-    iodine->Iodine.attachPlayStatusHandler(status =>
-      switch status {
-      | 0 => setIsPlaying(_ => false)
-      | 1 => setIsPlaying(_ => true)
-      | _ => Js.Exn.raiseError("Unexpected play status" ++ status->string_of_int)
-      }
-    )
+    iodine->Iodine.attachPlayStatusHandler(state => Js.log(state))
 
     None
   })
 
+  React.useEffect2(() => {
+    switch playState {
+    | #playing => iodine->Iodine.play
+    | #stopped => iodine->Iodine.stop
+    | #paused => iodine->Iodine.pause
+    }->ignore
+
+    None
+  }, (iodine, playState))
+
   let canvasRef = useEmulatorDisplay(~iodine)
-  useEmulatorRom(~iodine, ~rom, ~bios)
   let playButtonRef = useEmulatorAudio(~iodine)
-  let {width} = EmulatorProvider.useEmulatorContext()
+
+  React.useMemo5(() => {
+    playButtonRef: playButtonRef->ReactDOM.Ref.domRef,
+    canvasRef: canvasRef->ReactDOM.Ref.domRef,
+    playState: playState,
+    keyDown: keyDown,
+    keyUp: keyUp,
+  }, (playButtonRef, canvasRef, playState, keyDown, keyUp))
+}
+
+@react.component
+let make = (~data) => {
+  let {width} = Wrapper.useEmulatorContext()
 
   let scaleFactor = width /. gbaWidth->float_of_int
-  let height = width *. gbaAspectRatio
 
-  <>
-    <p>
-      <button onClick={_ => iodine->Iodine.play} ref={ReactDOM.Ref.domRef(playButtonRef)}>
-        {"Play"->React.string}
-      </button>
-    </p>
-    <div style={ReactDOMStyle.make(~height=height->Js.Float.toString ++ "px", ())}>
-      <canvas
-        ref={ReactDOM.Ref.domRef(canvasRef)}
-        width={gbaWidth->Belt.Int.toString}
-        height={gbaHeight->Belt.Int.toString}
-        style={ReactDOMStyle.make(
-          ~display="block",
-          ~transform=`scale(${scaleFactor->Js.Float.toString})`,
-          ~transformOrigin="0 0",
-          ~imageRendering="pixelated",
-          (),
-        )}
-      />
-    </div>
-  </>
+  <canvas
+    ref={data.canvasRef}
+    width={gbaWidth->Belt.Int.toString}
+    height={gbaHeight->Belt.Int.toString}
+    style={ReactDOMStyle.make(
+      ~display="block",
+      ~transform=`scale(${scaleFactor->Js.Float.toString})`,
+      ~transformOrigin="0 0",
+      ~imageRendering="pixelated",
+      (),
+    )}
+  />
 }

@@ -10,4 +10,5 @@ external make: (
   ~bleed: bool=?,
   ~loading: bool=?,
   ~icon: React.element=?,
+  ~ref: ReactDOM.domRef=?,
 ) => React.element = "Button"

@@ -6,9 +6,10 @@ external make: (
   ~onClick: ReactEvent.Mouse.t => unit=?,
   ~\"type": [#reset | #button | #submit]=?,
   ~children: React.element=?,
-  ~size: [#small | #standard]=?,
+  ~size: [#large | #standard]=?,
   ~tone: [#brandAccent | #critical | #neutral]=?,
   ~variant: [#transparent | #solid | #ghost | #soft]=?,
   ~bleed: bool=?,
   ~loading: bool=?,
-) => React.element = "Button"
+  ~ref: ReactDOM.domRef=?,
+) => React.element = "ButtonIcon"
