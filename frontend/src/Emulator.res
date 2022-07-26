@@ -87,16 +87,16 @@ type joypadKey = A | B | Select | Start | Right | Left | Up | Down | R | L
 
 let getJoyPadKey = (key: joypadKey) => {
   switch key {
-  | A => 88
-  | B => 90
-  | Select => 16
-  | Start => 0x013
-  | Right => 39
-  | Left => 37
-  | Up => 38
-  | Down => 40
-  | R => 83
-  | L => 65
+  | A => 0
+  | B => 1
+  | Select => 2
+  | Start => 3
+  | Right => 4
+  | Left => 5
+  | Up => 6
+  | Down => 7
+  | R => 8
+  | L => 9
   }
 }
 
@@ -106,7 +106,10 @@ type joypadCallbacks = {
 }
 
 let useEmulatorJoypad = (~iodine) => React.useMemo1(() => {
-    keyDown: key => iodine->Iodine.keyDown(key->getJoyPadKey),
+    keyDown: key => {
+      %debugger
+      iodine->Iodine.keyDown(key->getJoyPadKey)
+    },
     keyUp: key => iodine->Iodine.keyUp(key->getJoyPadKey),
   }, [iodine])
 
@@ -248,16 +251,26 @@ module Wrapper = {
   @react.component
   let make = (~children) => {
     let (dimensions, ref) = ElementDimensions.useDimensions()
-    let height = dimensions.width *. gbaAspectRatio
 
     <div
       ref={ReactDOM.Ref.domRef(ref)}
       style={ReactDOMStyle.make(
-        ~height=height->Js.Float.toString ++ "px",
+        ~maxWidth="100vw",
+        ~maxHeight="100vh",
         ~position="relative",
+        ~margin="auto",
         (),
+      )->ReactDOMStyle.unsafeAddProp(
+        "aspectRatio",
+        `${gbaWidth->string_of_int} / ${gbaHeight->string_of_int}`,
       )}>
-      {React.createElement(provider, {"value": dimensions, "children": children})}
+      {React.createElement(
+        provider,
+        {
+          "value": dimensions,
+          "children": children,
+        },
+      )}
     </div>
   }
 

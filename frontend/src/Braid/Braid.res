@@ -8,5 +8,6 @@ module Column = Braid__Column
 module Columns = Braid__Columns
 module Heading = Braid__Heading
 module Icon = Braid__Icon
+module Inline = Braid__Inline
 module Stack = Braid__Stack
 module Text = Braid__Text

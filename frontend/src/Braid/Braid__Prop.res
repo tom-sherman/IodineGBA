@@ -8,7 +8,7 @@ type propObject<'a> = {
 }
 
 type space = propObject<
-  [#xsmall | #small | #large | #medium | #none | #gutter | #xxsmall | #xlarge | #xxlarge],
+  [#xsmall | #small | #large | #medium | #none | #gutter | #xxsmall | #xlarge | #xxlarge | #none],
 >
 
 %%private(
